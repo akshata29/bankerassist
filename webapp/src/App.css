@@ -13,6 +13,45 @@
   }
 }
 
+/* CSS to left-align the Client Data Model content */
+.client-data-model {
+  text-align: left;
+  word-wrap: break-word; /* Allow breaking of long words */
+  max-height: 200px; /* Approximate height for 10 lines */
+  overflow-y: auto; /* Enable vertical scrolling */
+  white-space: pre-wrap; /* Wrap long lines */
+  padding: 10px; /* Add padding for readability */
+  background-color: #f8f9fa; /* Optional: light background for better readability */
+  border: 1px solid #ddd; /* Optional: border for clarity */
+}
+
+.scrollable-textbox {
+  max-height: 300px; /* Set maximum height */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+}
+
+
+.banker-insights {
+  text-align: left;
+  word-wrap: break-word;
+  height: 200px; /* Set fixed height to enable scrolling */
+  overflow-y: auto; /* Enable vertical scrollbar when content overflows */
+  white-space: pre-wrap; /* Wrap long lines if necessary */
+  background-color: #f8f9fa; /* Optional for readability */
+  border: 1px solid #ddd; /* Optional for clarity */
+  padding: 10px; /* Optional for spacing */
+}
+
+
+/* For list items specifically, remove any default styling */
+.banker-insights li {
+  list-style-type: none; /* Ensure no bullets or dashes */
+  margin-left: 0; /* Reset any indentation */
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
