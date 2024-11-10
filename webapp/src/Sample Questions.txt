@@ -1,0 +1,7 @@
+Based on the insights from Emma, her employment status and the purpose, what product should be recommended?
+With Emma's income what are the cross-sell opportunities we can recommend to grow here savings over time?
+Suggest the top 3 product recommendation that will grow Emma's fund over time, handle daily transaction and manage savings effectively.  Give concrete example and the reasoning on those recommendation
+Generate the enhanced summary based on the conversation with Emma
+What are the action items and follow-up from the conversation with Emma?
+Generate a draft email to Emma on following up on action items
+Assuming the recommended account are opened by Emma, draft an thank you email and any help I as banker can provide going further

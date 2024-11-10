@@ -208,9 +208,8 @@ function Transcription() {
         expiryDate: result.analyzeResult.documents[0].fields?.DateOfExpiration?.content || "N/A",
         issueDate: result.analyzeResult.documents[0].fields?.DateOfIssue?.content || "N/A",
         issueState: result.analyzeResult.documents[0].fields?.Region?.content || "N/A",
-        firstName: result.analyzeResult.documents[0].fields?.FirstName?.content || "N/A",
-        lastName: result.analyzeResult.documents[0].fields?.LastName?.content || "N/A",
         address: result.analyzeResult.documents[0].fields?.Address?.content || "N/A",
+        dob: result.analyzeResult.documents[0].fields?.DateOfBirth?.content || "N/A",
       };
 
       setLicenseDetails(extractedData);
@@ -262,19 +261,19 @@ function Transcription() {
   const analyzeGuidance = useCallback(async () => {
 
     const prompt = `
-      ROLE: You are an AI assistant analyzing a conversation transcript to identify addressed and unaddressed questions.
-      TASK: For each question below, check if it has been answered based on the transcript. If answered, provide the answer. If not, leave it in the list of pending questions.
-      QUESTIONS:
+      ROLE: You are an AI assistant analyzing a conversation transcript between customer and banker.  You need to identify and extract the metadata for the requested entities.
+      TASK: For each entity below, check if it has been answered based on the transcript. If answered, provide the answer. If not, leave it in the list of pending entities.
+      Entites:
       ${pendingTasks.join("\n")}
       
       TRANSCRIPT:
       ${recognisedText}
       
       Format the response as follows:
-      Addressed Questions:
-      Question - Answer
-      Unaddressed Questions:
-      Question
+      Addressed Entities:
+      Entity - Answer
+      Unaddressed Entities:
+      Entity
     `;
 
     try {
@@ -307,9 +306,9 @@ function Transcription() {
 
     let addressedSection = false;
     completionText.split("\n").forEach((line) => {
-      if (line.includes("Addressed Questions:")) {
+      if (line.includes("Addressed Entities:")) {
         addressedSection = true;
-      } else if (line.includes("Unaddressed Questions:")) {
+      } else if (line.includes("Unaddressed Entities:")) {
         addressedSection = false;
       } else if (addressedSection && line) {
         // Check if line is not None
@@ -340,7 +339,7 @@ function Transcription() {
     const updatedModel = { ...clientDataModel };
 
     addressedQuestions.forEach(({ question, answer }) => {
-      console.log("Question:", question, "Answer:", answer); // Debugging log
+      console.log("Entity:", question, "Answer:", answer); // Debugging log
       switch (question.replace(/^[-]/, "").trim()) {
         case "Customer First Name":
           updatedModel.client.personal_information.first_name = answer;
@@ -498,9 +497,8 @@ function Transcription() {
         - Expiry Date: ${licenseDetails.expiryDate}
         - Issue Date: ${licenseDetails.issueDate}
         - Issue State: ${licenseDetails.issueState}
-        - First Name: ${licenseDetails.firstName}
-        - Last Name: ${licenseDetails.lastName}
         - Address: ${licenseDetails.address}
+        - DOB: ${licenseDetails.dob}
       `;
 
       setRecognisedText((prevTranscript) => `${prevTranscript}\n\n${formattedDetails}`);
@@ -553,10 +551,11 @@ function Transcription() {
   };
 
   return (
-    <Container className="mt-4">
-      <h2>Contoso Banker Assist</h2>
-
+    <Container className="mt-3">
       <Row className="mb-3">
+        <Col>
+          <h3>Contoso Banker Assist</h3>
+        </Col>
         <Col>
           <Button variant={isRecognising ? "danger" : "primary"} onClick={toggleListener}>
             {isRecognising ? "Stop" : "Start"} Transcription
@@ -567,11 +566,10 @@ function Transcription() {
           <ChatAssist transcript={recognisedText} />
         </Col>
       </Row>
-
-      <Row className="mt-4">
+      <Row className="mt-3">
         {/* Address and Contact Info Section */}
         <Col md={8}>
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Personal Information</Card.Header>
             <Card.Body>
               <Row>
@@ -630,7 +628,39 @@ function Transcription() {
             </Card.Body>
           </Card>
 
-          <Card className="mb-4">
+          <Card className="mb-3">
+            <Card.Header>Occupation</Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Title</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={occupationTitle || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Type</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={occupationType || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Annual Income</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={annualIncome || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+
+          <Card className="mb-3">
             <Card.Header>Account Details</Card.Header>
             <Card.Body>
               <Row>
@@ -659,10 +689,30 @@ function Transcription() {
                   </Form.Group>
                 </Col>
               </Row>
+              <Row>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Account Opening Date</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={accountOpeningDate || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Branch Location</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={branchLocation || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
 
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Address</Card.Header>
             <Card.Body>
               <Row>
@@ -706,7 +756,7 @@ function Transcription() {
             </Card.Body>
           </Card>
 
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Identification</Card.Header>
             <Card.Body>
               <Row>
@@ -735,11 +785,23 @@ function Transcription() {
                   </Form.Group>
                 </Col>
               </Row>
+              <Row>
+                <Col md={4}>
+                  <Form.Group as={Row} className="d-flex align-items-center">
+                    <Form.Label column sm="4">Issue State</Form.Label>
+                    <Col sm="8">
+                      <Form.Control type="text" value={dlIssueState || ''} readOnly />
+                    </Col>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                </Col>
+                <Col md={4}>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
-
-
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Row>
               <Col>
                 <Card.Header>Active Transcript</Card.Header>
@@ -759,14 +821,14 @@ function Transcription() {
 
         {/* Client Data Model and Banker Insights */}
         <Col md={4}>
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Client Data Model (Entities Extract/Live Guidance)</Card.Header>
             <Card.Body>
               <pre className="client-data-model">{JSON.stringify(clientDataModel, null, 2)}</pre>
             </Card.Body>
           </Card>
 
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Banker Insights (Pending Tasks)</Card.Header>
             <Card.Body>
             <div className="banker-insights">
@@ -778,7 +840,7 @@ function Transcription() {
             </Card.Body>
           </Card>
 
-          <Card className="mb-4">
+          <Card className="mb-3">
             <Card.Header>Driving License</Card.Header>
             <Card.Body>
               <pre className="client-data-model">{licenseDetails && (
