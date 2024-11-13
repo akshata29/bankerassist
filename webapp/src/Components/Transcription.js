@@ -10,6 +10,8 @@ import Card from 'react-bootstrap/Card';
 import { AudioConfig, SpeechConfig, SpeechRecognizer } from 'microsoft-cognitiveservices-speech-sdk';
 import axios from 'axios';
 import ChatAssist from './ChatAssist'; // Import the ChatAssist component
+import ClientDataModelTable from './ClientDataModelTable';
+import SentimentAnalysis from './SentimentAnalysis'; // Import the SentimentAnalysis component
 
 const API_KEY = process.env.REACT_APP_COG_SERVICE_KEY;
 const API_LOCATION = process.env.REACT_APP_COG_SERVICE_LOCATION;
@@ -61,6 +63,7 @@ function Transcription() {
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("");
   const [recommendation, setRecommendation] = useState('');
+  const [analysis, setAnalysis] = useState('');
   const [initialPendingTask, setInitialPendingTask] = useState('');
   const [dlDetails, setDlDetails] = useState({});
 
@@ -219,6 +222,57 @@ function Transcription() {
       alert("Failed to analyze the driving license. Please try again.");
     }
   };
+
+  const postCallAnalysis = useCallback(async () => {
+    const prompt = `Analyze the following transcript of a conversation between a banker and a customer who is interested in opening an account. Perform a thorough analysis covering the following areas:
+
+        1. **Sentiment Analysis**: Determine the overall sentiment of the conversation. Identify whether the customer's tone was positive, negative, or neutral, and highlight any shifts in sentiment throughout the conversation.
+
+        2. **Action Items**: List any specific action items that emerged during the conversation. Indicate who is responsible for each action item and any due dates or next steps if mentioned.
+
+        3. **Follow-up Recommendations**: Suggest any follow-up actions the banker should take based on the conversation, such as providing more information, scheduling a follow-up call, or sending relevant documents.
+
+        4. **Emotional Indicators**: Identify any emotions expressed by the customer, such as excitement, hesitation, frustration, or satisfaction. Note any specific moments in the conversation where emotions were strongly expressed.
+
+        5. **Behavioral Insights**: Analyze the customer’s behavior throughout the conversation, such as openness to suggestions, decisiveness, or any signs of hesitation or doubt.
+
+        6. **Customer's Needs and Concerns**: Summarize the primary needs or concerns expressed by the customer regarding account options, investment opportunities, or other financial services discussed.
+
+        7. **Overall Engagement**: Provide an overall assessment of the customer's level of engagement and interest in the account options discussed.
+
+        Transcript:
+        ---
+        ${recognisedText}
+        ---
+
+        Based on this analysis, provide a summary that captures the most significant insights about the customer's preferences, potential follow-up steps, and any additional recommendations for the banker to address the customer’s needs effectively.
+    `;
+  
+    try {
+      const response = await axios.post(
+        `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_MODEL}/chat/completions?api-version=${AZURE_OPENAI_VERSION}`,
+        {
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0,
+          max_tokens: 1500
+        },
+        {
+          headers: {
+            "Authorization": `Bearer ${AZURE_OPENAI_KEY}`,
+            "Content-Type": "application/json",
+            'api-key': AZURE_OPENAI_KEY
+          }
+        }
+      );
+  
+      // Extract the recommendation from the response
+      const callAnalysis = response.data.choices[0].message.content.trim();
+      return `${callAnalysis}`;
+    } catch (error) {
+      console.error("Error generating callAnalysis:", error);
+      return `Error generating callAnalysis: ${error.message}`;
+    }
+  });
 
   const generateRecommendation = useCallback(async () => {
     const prompt = `
@@ -547,6 +601,7 @@ function Transcription() {
     setPendingTasks(initialPendingTask);
     analyzeGuidance();
     generateRecommendation().then((rec) => setRecommendation(rec));
+    postCallAnalysis().then((callAnalysis) => setAnalysis(callAnalysis));
     setPendingTasks(pendingTasks)
   };
 
@@ -809,11 +864,17 @@ function Transcription() {
                   <Form.Control as="textarea" rows={5} value={`${recognisedText}${recognisingText}`} readOnly ref={textRef} />
                 </Card.Body>
               </Col>
+              {/* <Col>
+                  <Card.Header>Client Data Model (Entities Extract/Live Guidance)</Card.Header>
+                  <Card.Body>
+                    <pre className="client-data-model">{JSON.stringify(clientDataModel, null, 2)}</pre>
+                  </Card.Body>
+              </Col> */}
               <Col>
-                <Card.Header>Recommendation</Card.Header>
-                <Card.Body>
-                  <Form.Control as="textarea" rows={5} value={recommendation} readOnly />
-                </Card.Body>
+                <ClientDataModelTable 
+                    clientDataModel={clientDataModel} 
+                    updateClientDataModel={setClientDataModel} 
+                  />
               </Col>
             </Row>
           </Card>
@@ -822,12 +883,18 @@ function Transcription() {
         {/* Client Data Model and Banker Insights */}
         <Col md={4}>
           <Card className="mb-3">
-            <Card.Header>Client Data Model (Entities Extract/Live Guidance)</Card.Header>
-            <Card.Body>
-              <pre className="client-data-model">{JSON.stringify(clientDataModel, null, 2)}</pre>
-            </Card.Body>
+            <Card.Header>Recommendation</Card.Header>
+              <Card.Body>
+                <Form.Control as="textarea" rows={25} value={recommendation} readOnly />
+              </Card.Body>
           </Card>
-
+          <Card className="mb-3">
+            <Card.Header>Sentiment</Card.Header>
+              <Card.Body>
+                {/* Sentiment Analysis Component */}
+                <SentimentAnalysis transcript={recognisedText} />
+              </Card.Body>
+          </Card>
           <Card className="mb-3">
             <Card.Header>Banker Insights (Pending Tasks)</Card.Header>
             <Card.Body>
@@ -858,6 +925,12 @@ function Transcription() {
             </Card.Body>
             <input type="file" accept="image/*" onChange={handleFileChange} />
             <button onClick={analyzeDrivingLicense} variant="primary">Upload ID</button>
+          </Card>
+          <Card className="mb-3">
+            <Card.Header>Post call Analysis</Card.Header>
+              <Card.Body>
+                <Form.Control as="textarea" rows={25} value={analysis} readOnly />
+              </Card.Body>
           </Card>
         </Col>
       </Row>
