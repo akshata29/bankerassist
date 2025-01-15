@@ -246,6 +246,7 @@ function Transcription() {
         ---
 
         Based on this analysis, provide a summary that captures the most significant insights about the customer's preferences, potential follow-up steps, and any additional recommendations for the banker to address the customer’s needs effectively.
+        If the provided transcript does not contain sufficient information, just return only ***Waiting to analyze post-call transcript** as response.
     `;
   
     try {
@@ -276,15 +277,25 @@ function Transcription() {
 
   const generateRecommendation = useCallback(async () => {
     const prompt = `
-      Act as a financial advisor. I have collected detailed information about a customer’s profile during a conversation, including their basic personal details, purpose for the account, selected account options, and verified ID. Your task is to analyze this information and recommend suitable products that could enhance the customer’s financial wellbeing or meet their specific needs. Provide these recommendations in a way that is informative and aligned with the customer’s potential benefits, without pushing unnecessary products.
+      Act as a banker who is expert on Products and services offered by Hello Bank. 
+      Following is the real-time transcript information about a customer’s profile during a conversation, including their basic personal details, 
+      purpose for the account, selected account options, and details about verification using driving license or passport. Your task is to analyze this information and recommend suitable products 
+      that could enhance the customer’s financial wellbeing or meet their specific needs. 
+      If the provided transcript does not contain sufficient information just return only ***Waiting for Recommendation** as response.  If it does contain required information, generate recommendation.
+      Provide these recommendations in a way that is informative and aligned with the customer’s potential benefits, without pushing unnecessary products.
   
-      Here’s the information we have on the customer:
+      Here’s the transcript between banker and customer:
   
       ${recognisedText}
   
-      Based on this information, suggest financial products or services that would provide tangible value to the customer, such as investment accounts, credit options, insurance products, or savings plans, along with brief explanations of why each product could benefit them.
+      Based on this information, suggest 4 condensed bullet points on financial products or services that would provide tangible value to the customer, 
+      such as investment accounts, credit options, insurance products, or savings plans, along with brief explanations of why each product could benefit
+      them.
     `;
   
+    // Ensure that the recommendation is started only after there is enough information captured in the transcript as the conversation is real-time transcription.
+    // The key attributes that are required to provide recommendation are employment status, demographic data, purpose for the account and other required metadata.
+
     try {
       const response = await axios.post(
         `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_MODEL}/chat/completions?api-version=${AZURE_OPENAI_VERSION}`,
@@ -877,6 +888,15 @@ function Transcription() {
                   />
               </Col>
             </Row>
+            <br/>
+            <Row>
+              <Card className="mb-3">
+                <Card.Header>Post call Analysis</Card.Header>
+                  <Card.Body>
+                    <Form.Control as="textarea" rows={25} value={analysis} readOnly />
+                  </Card.Body>
+              </Card>
+            </Row>
           </Card>
         </Col>
 
@@ -885,7 +905,7 @@ function Transcription() {
           <Card className="mb-3">
             <Card.Header>Recommendation</Card.Header>
               <Card.Body>
-                <Form.Control as="textarea" rows={25} value={recommendation} readOnly />
+                <Form.Control className="recoFont" as="textarea" rows={25} value={recommendation} readOnly />
               </Card.Body>
           </Card>
           <Card className="mb-3">
@@ -903,7 +923,7 @@ function Transcription() {
                   <p key={index}>{task}</p>
                 ))}
               </div>
-              <p className="text-danger">WARNING – Be careful to discuss race, color, religion</p>
+              {/* <p className="text-danger">WARNING – Be careful to discuss race, color, religion</p> */}
             </Card.Body>
           </Card>
 
@@ -925,12 +945,6 @@ function Transcription() {
             </Card.Body>
             <input type="file" accept="image/*" onChange={handleFileChange} />
             <button onClick={analyzeDrivingLicense} variant="primary">Upload ID</button>
-          </Card>
-          <Card className="mb-3">
-            <Card.Header>Post call Analysis</Card.Header>
-              <Card.Body>
-                <Form.Control as="textarea" rows={25} value={analysis} readOnly />
-              </Card.Body>
           </Card>
         </Col>
       </Row>

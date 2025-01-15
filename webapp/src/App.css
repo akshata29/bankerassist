@@ -43,7 +43,7 @@
 .banker-insights {
   text-align: left;
   word-wrap: break-word;
-  height: 100px; /* Set fixed height to enable scrolling */
+  height: 250px; /* Set fixed height to enable scrolling */
   overflow-y: auto; /* Enable vertical scrollbar when content overflows */
   white-space: pre-wrap; /* Wrap long lines if necessary */
   background-color: #f8f9fa; /* Optional for readability */
@@ -68,6 +68,11 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
+
+.recoFont {
+  font-size: x-large;
+}
+
 
 .App-link {
   color: #61dafb;
